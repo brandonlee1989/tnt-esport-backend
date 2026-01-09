@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Season {
+  id         Int              @id @default(autoincrement())
+  nome       String
+  annoInizio Int
+  annoFine   Int
+  championships Championship[]
+}
+
+model Championship {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  tipo      ChampionshipType
+  seasonId  Int
+  season    Season   @relation(fields: [seasonId], references: [id])
+  matches   Match[]
+}
+
+enum ChampionshipType {
+  LEAGUE
+  CUP
+}
+
+model Match {
+  id             Int         @id @default(autoincrement())
+  fcMatchId      String?     @unique
+  championshipId Int?
+  championship   Championship? @relation(fields: [championshipId], references: [id])
+
+  data           DateTime
+  avversario     String
+  golFatti       Int
+  golSubiti      Int
+
+  youtubeUrl     String?     // LINK VIDEO YOUTUBE
+
+  stato          MatchStatus @default(DRAFT)
+  importedAt     DateTime    @default(now())
+
+  playerStats    PlayerStat[]
+}
+
+enum MatchStatus {
+  DRAFT
+  PUBLISHED
+  REJECTED
+}
+
+model Player {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  cognome      String
+  numeroMaglia Int
+  gamertag     String   @unique
+  posizione    String
+  stats        PlayerStat[]
+}
+
+model PlayerStat {
+  id         Int    @id @default(autoincrement())
+  playerId   Int
+  matchId    Int
+
+  voto       Float
+  gol        Int
+  assist     Int
+  tiri       Int
+  salvataggi Int
+  golSubiti  Int
+
+  player Player @relation(fields: [playerId], references: [id])
+  match  Match  @relation(fields: [matchId], references: [id])
+
+  @@unique([playerId, matchId])
+}
